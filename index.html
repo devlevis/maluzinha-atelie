@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#c4557a">
+    <title>Maluzinha - Controle do Ateliê</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icone.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icone.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="topo">
+        <span class="marca">Maluzinha</span>
+        <span class="titulo-tela" id="tituloTela">Início</span>
+        <button class="engrenagem" id="abrirBackup" aria-label="Backup">⚙</button>
+    </header>
+
+    <main>
+        <section id="tela-inicio" class="tela ativa">
+            <div class="resumo">
+                <div class="cartao-num alerta"><span id="numFalta">0</span><small>materiais para comprar</small></div>
+                <div class="cartao-num"><span id="numAbertas">0</span><small>encomendas em aberto</small></div>
+                <div class="cartao-num largo"><span id="valorReceber">R$ 0,00</span><small>a receber das encomendas</small></div>
+            </div>
+
+            <h2>Precisa comprar</h2>
+            <div id="listaInicioCompras" class="lista"></div>
+
+            <h2>Próximas entregas</h2>
+            <div id="listaProximas" class="lista"></div>
+        </section>
+
+        <section id="tela-materiais" class="tela">
+            <div class="filtros" id="filtrosCategoria"></div>
+            <input type="search" id="buscaMaterial" class="busca" placeholder="Buscar material ou cor">
+            <div id="listaMateriais" class="lista"></div>
+            <button class="botao-mais" id="novoMaterial" aria-label="Novo material">+</button>
+        </section>
+
+        <section id="tela-compras" class="tela">
+            <p class="dica">Aqui aparecem os materiais que estão abaixo da quantidade mínima. Quando comprar, toque em
+                "Comprei" para somar ao estoque.</p>
+            <div id="listaCompras" class="lista"></div>
+            <div class="acoes-lista">
+                <a class="botao zap-botao" id="enviarLista" target="_blank" rel="noopener">Enviar lista pelo WhatsApp</a>
+                <button class="botao secundario" id="copiarLista">Copiar lista</button>
+            </div>
+        </section>
+
+        <section id="tela-produtos" class="tela">
+            <p class="dica">Peças prontas para entrega. Use o + e o − para atualizar a quantidade.</p>
+            <input type="search" id="buscaProduto" class="busca" placeholder="Buscar produto">
+            <div id="listaProdutos" class="lista"></div>
+            <button class="botao-mais" id="novoProduto" aria-label="Novo produto">+</button>
+        </section>
+
+        <section id="tela-encomendas" class="tela">
+            <div class="filtros" id="filtrosStatus">
+                <button class="chip ativo" data-status="abertas">Em aberto</button>
+                <button class="chip" data-status="Novo">Novo</button>
+                <button class="chip" data-status="Em produção">Em produção</button>
+                <button class="chip" data-status="Pronto">Pronto</button>
+                <button class="chip" data-status="Entregue">Entregue</button>
+                <button class="chip" data-status="todas">Todas</button>
+            </div>
+            <input type="search" id="buscaEncomenda" class="busca" placeholder="Buscar por cliente ou produto">
+            <div id="listaEncomendas" class="lista"></div>
+            <button class="botao-mais" id="novaEncomenda" aria-label="Nova encomenda">+</button>
+        </section>
+
+        <section id="tela-backup" class="tela">
+            <div class="caixa">
+                <h2>Cópia de segurança</h2>
+                <p>Os dados ficam guardados só neste celular. Faça uma cópia de vez em quando e guarde o arquivo
+                    (por exemplo, mandando para você mesma no WhatsApp ou salvando no Google Drive).</p>
+                <button class="botao" id="exportar">Baixar cópia dos dados</button>
+                <label class="botao secundario">
+                    Restaurar uma cópia
+                    <input type="file" id="importar" accept=".json" hidden>
+                </label>
+            </div>
+            <div class="caixa">
+                <h2>Planilhas</h2>
+                <p>Arquivos que abrem no Excel ou no Google Planilhas.</p>
+                <button class="botao secundario" id="csvMateriais">Planilha de materiais</button>
+                <button class="botao secundario" id="csvEncomendas">Planilha de encomendas</button>
+            </div>
+            <div class="caixa">
+                <h2>Instalar no celular</h2>
+                <p>No Chrome, toque nos três pontinhos e depois em "Adicionar à tela inicial". O app fica com um ícone
+                    igual aos outros aplicativos.</p>
+            </div>
+        </section>
+    </main>
+
+    <nav class="abas">
+        <button class="aba ativa" data-tela="inicio">Início</button>
+        <button class="aba" data-tela="materiais">Materiais</button>
+        <button class="aba" data-tela="compras">Compras<span class="bolinha" id="bolinhaCompras"></span></button>
+        <button class="aba" data-tela="produtos">Produtos</button>
+        <button class="aba" data-tela="encomendas">Encomendas</button>
+    </nav>
+
+    <dialog id="dlgMaterial">
+        <form id="formMaterial" method="dialog">
+            <h2 id="tituloMaterial">Novo material</h2>
+            <label>Material<input name="nome" required placeholder="Ex.: Fita de gorgurão 38mm"></label>
+            <div class="linha">
+                <label>Tipo<select name="categoria" id="selCategoria"></select></label>
+                <label>Cor<input name="cor" placeholder="Ex.: Rosa bebê"></label>
+            </div>
+            <div class="linha">
+                <label>Quantidade<input name="quantidade" type="number" min="0" step="0.1" value="0" required></label>
+                <label>Unidade
+                    <select name="unidade">
+                        <option value="un">unidades</option>
+                        <option value="m">metros</option>
+                        <option value="pct">pacotes</option>
+                        <option value="rolo">rolos</option>
+                    </select>
+                </label>
+            </div>
+            <label>Comprar quando tiver menos de<input name="minimo" type="number" min="0" step="0.1" value="5"></label>
+            <label>Onde comprar<input name="fornecedor" placeholder="Ex.: Armarinho do Centro"></label>
+            <div class="acoes">
+                <button type="button" class="botao perigo" id="excluirMaterial">Excluir</button>
+                <button type="button" class="botao secundario" data-fechar>Cancelar</button>
+                <button type="submit" class="botao">Salvar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="dlgCompra">
+        <form id="formCompra" method="dialog">
+            <h2>Registrar compra</h2>
+            <p id="textoCompra" class="dica"></p>
+            <label>Quantidade comprada<input name="quantidade" type="number" min="0.1" step="0.1" required></label>
+            <div class="acoes">
+                <button type="button" class="botao secundario" data-fechar>Cancelar</button>
+                <button type="submit" class="botao">Somar ao estoque</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="dlgProduto">
+        <form id="formProduto" method="dialog">
+            <h2 id="tituloProduto">Novo produto</h2>
+            <label>Nome<input name="nome" required></label>
+            <label>Descrição<input name="descricao"></label>
+            <div class="linha">
+                <label>Preço (R$)<input name="preco" type="number" min="0" step="0.01" required></label>
+                <label>Prontos<input name="quantidade" type="number" min="0" value="0" required></label>
+            </div>
+            <label>Cores / modelos (separe por vírgula)<input name="cores"></label>
+            <div class="acoes">
+                <button type="button" class="botao perigo" id="excluirProduto">Excluir</button>
+                <button type="button" class="botao secundario" data-fechar>Cancelar</button>
+                <button type="submit" class="botao">Salvar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="dlgEncomenda">
+        <form id="formEncomenda" method="dialog">
+            <h2 id="tituloEncomenda">Nova encomenda</h2>
+            <label>Cliente<input name="cliente" required></label>
+            <label>WhatsApp da cliente<input name="telefone" type="tel" placeholder="(85) 99999-9999"></label>
+            <label>Produto<select name="produtoId" id="selProduto" required></select></label>
+            <label>Cor / modelo<input name="cor" list="opcoesCor"></label>
+            <datalist id="opcoesCor"></datalist>
+            <div class="linha">
+                <label>Quantidade<input name="quantidade" type="number" min="1" value="1" required></label>
+                <label>Valor total (R$)<input name="valor" type="number" min="0" step="0.01" required></label>
+            </div>
+            <div class="linha">
+                <label>Entrega<input name="entrega" type="date"></label>
+                <label>Status
+                    <select name="status">
+                        <option>Novo</option>
+                        <option>Em produção</option>
+                        <option>Pronto</option>
+                        <option>Entregue</option>
+                    </select>
+                </label>
+            </div>
+            <label class="check"><input name="pago" type="checkbox"> Já foi pago</label>
+            <label class="check"><input name="baixarEstoque" type="checkbox"> Saiu da pronta-entrega</label>
+            <label>Observações<textarea name="obs" rows="2"></textarea></label>
+            <div class="acoes">
+                <button type="button" class="botao perigo" id="excluirEncomenda">Excluir</button>
+                <button type="button" class="botao secundario" data-fechar>Cancelar</button>
+                <button type="submit" class="botao">Salvar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <div id="aviso" class="aviso"></div>
+
+    <script src="produtos.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
